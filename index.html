@@ -118,7 +118,7 @@ main{padding:16px;max-width:640px;margin:0 auto;padding-bottom:calc(env(safe-are
 
 /* fogli modali */
 .velo{position:fixed;inset:0;background:rgba(10,20,30,.5);z-index:20;display:flex;align-items:flex-end;justify-content:center}
-.foglio{background:var(--cemento);width:100%;max-width:640px;max-height:88vh;border-radius:16px 16px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 16px);display:flex;flex-direction:column;gap:12px}
+.foglio{background:var(--cemento);width:100%;max-width:640px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 16px);display:flex;flex-direction:column;gap:12px}
 .foglio h2{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:26px;line-height:1.1}
 .foglio p{margin:0;color:var(--grigio);font-size:15px}
 .foglio .scorri{overflow:auto;flex:1;min-height:120px}
@@ -140,6 +140,27 @@ label.campo{display:block;font-size:14px;color:var(--grigio);margin-bottom:12px}
 label.campo input{display:block;width:100%;margin-top:4px;border:1px solid var(--linea);border-radius:8px;padding:11px;font-size:16px;background:#fff}
 .file{display:block;border:2px dashed var(--linea);border-radius:var(--r);padding:22px;text-align:center;font-weight:600;color:var(--blu);background:#f7f9fb}
 .file input{display:none}
+.ruolo{font-family:Barlow,sans-serif;font-size:12px;font-weight:600;background:var(--etichetta);color:var(--inchiostro);border-radius:99px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.card-top h2{margin:0}
+.card-top input{border:1px solid var(--linea);border-radius:8px;padding:7px 8px;font-size:15px;background:#fff}
+.li-btn.neutro{color:var(--inchiostro)}
+.numeri{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.numeri div{background:#f3f6fa;border-radius:8px;padding:8px 10px;font-size:13px;color:var(--grigio)}
+.numeri b{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:28px;line-height:1.1;color:var(--inchiostro)}
+.numeri .rosso b{color:var(--rosso)} .numeri .verde b{color:var(--verde-scuro)}
+.tab-mini{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:12px}
+.tab-mini th{text-align:left;font-weight:600;color:var(--grigio);font-size:13px;border-bottom:1px solid var(--linea);padding:4px 0}
+.tab-mini td{padding:6px 0;border-bottom:1px solid #eef1f4}
+.tab-mini td+td,.tab-mini th+th{text-align:right}
+.sottot{font-weight:600;font-size:14px;margin:4px 0 6px}
+.prev{border:1px solid var(--linea);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:15px}
+.prev b{display:block;overflow-wrap:anywhere}
+.prev .riga-btn{margin-top:10px}
+.car .testo .dove{white-space:normal}
+.car.eliminato{opacity:.55}
+.gestione{border-top:1px solid var(--linea);padding-top:10px}
+.gestione input{flex:1;border:1px solid var(--linea);border-radius:8px;padding:11px;font-size:16px;background:#fff;min-width:0}
 .turno{display:flex;flex-direction:column;background:#f3f6fa;border:1px solid var(--linea);border-radius:8px;padding:12px 14px;margin-bottom:12px}
 .turno span{font-size:13px;color:var(--grigio)}
 .turno b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:26px;line-height:1.15}
@@ -175,7 +196,7 @@ nav.tab button[aria-pressed=true]{background:var(--inchiostro);color:#fff;border
 <!-- ============ HOME ============ -->
 <section id="v-home" class="hidden">
   <header>
-    <div class="chi"><div class="nome" id="h-nome"></div><div class="giorno" id="h-giorno"></div></div>
+    <div class="chi"><div class="nome"><span id="h-nome"></span><span class="ruolo hidden" id="h-ruolo">Manager</span></div><div class="giorno" id="h-giorno"></div></div>
     <span class="sync" id="h-sync">In linea</span>
     <button class="icona-btn" id="b-menu" aria-label="Menu">☰</button>
   </header>
@@ -195,25 +216,53 @@ nav.tab button[aria-pressed=true]{background:var(--inchiostro);color:#fff;border
   </main>
 </section>
 
-<!-- ============ UFFICIO ============ -->
+<!-- ============ MENU ============ -->
 <section id="v-ufficio" class="hidden">
   <header>
     <button class="icona-btn" id="b-indietro" aria-label="Indietro">‹</button>
-    <div class="chi"><div class="nome">Menu</div><div class="giorno">Picking e turno di lavoro</div></div>
+    <div class="chi"><div class="nome">Menu</div><div class="giorno" id="m-sotto">Turno di lavoro</div></div>
   </header>
   <main>
-    <div class="card">
-      <h2>Carica il picking</h2>
-      <p>Seleziona i file Excel di Mondoffice (picking e, se c'è, dettaglio carta). La data di consegna viene letta dal nome del file; puoi cambiarla.</p>
-      <label class="campo">Consegne del giorno<input type="date" id="in-data-import"></label>
-      <label class="file">Scegli file Excel<input type="file" id="in-file" accept=".xlsx,.xls,.csv" multiple></label>
-      <div class="log" id="import-log"></div>
+    <!-- solo manager -->
+    <div id="m-manager" class="hidden">
+      <div class="card">
+        <div class="card-top"><h2>Riepilogo</h2><input type="date" id="r-data" aria-label="Giorno del riepilogo"></div>
+        <div id="riep"></div>
+      </div>
+
+      <div class="card">
+        <h2>Carica il picking</h2>
+        <p>Seleziona i file Excel di Mondoffice: il picking e, se c'è, il dettaglio carta. Prima di caricarli vedi un'anteprima.</p>
+        <label class="campo">Consegne del giorno<input type="date" id="in-data-import"></label>
+        <label class="file">Scegli file Excel<input type="file" id="in-file" accept=".xlsx,.xls,.csv" multiple></label>
+        <div id="anteprima"></div>
+        <div class="log" id="import-log"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top"><h2>Caricamenti</h2><button class="li-btn neutro" id="b-agg-car">Aggiorna</button></div>
+        <p>File caricato per sbaglio? Eliminalo: spariscono le consegne che aveva creato. Poi carica quello giusto.</p>
+        <ul class="lista" id="car-lista"><li class="vuoto">Caricamento…</li></ul>
+      </div>
+
+      <div class="card">
+        <h2>Autisti</h2>
+        <p>Il link degli autisti apre l'app senza il menu del manager: possono solo caricare, consegnare e segnare le mancate consegne.</p>
+        <div class="riga-btn"><button class="btn verde" id="b-link-share">Invia il link</button><button class="btn sec" id="b-link-copia">Copia link</button></div>
+      </div>
+
+      <div class="card">
+        <h2>Foglio Google</h2>
+        <p>Tutte le consegne, i colli scansionati e lo storico delle operazioni.</p>
+        <a class="btn sec pieno" id="b-foglio" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Apri il foglio</a>
+      </div>
     </div>
+
     <div class="card">
       <h2>Turno di lavoro</h2>
       <div class="turno"><span>In servizio</span><b id="t-nome"></b></div>
       <p id="t-coda"></p>
-      <p>A fine giornata, o se il telefono passa a un altro autista, tocca <b>Fine turno</b>: al prossimo avvio l'app chiederà il nome di chi lo usa.</p>
+      <p>A fine giornata, o se il telefono passa a un'altra persona, tocca <b>Fine turno</b>: al prossimo avvio l'app chiederà il nome di chi lo usa.</p>
       <button class="btn rosso pieno" id="b-esci">Fine turno · Esci</button>
     </div>
   </main>
@@ -271,7 +320,8 @@ const S = {
   nome: LS.get('nome',''), url: LS.get('url', CONFIG.SERVER_URL), chiave: LS.get('chiave', CONFIG.CHIAVE),
   zona: LS.get('zona','Biella'), consegne: [], motivi: ['Cliente assente','Chiuso','Rifiutato','Indirizzo errato','Merce danneggiata','Altro'],
   modo: 'carico', attiva: null, coda: LS.get('coda', []), pendenti: LS.get('pendenti', []),
-  ultimo: {codice:'', t:0}, pos: null, scanner: null, inviando: false, bloccoScan: false
+  ultimo: {codice:'', t:0}, pos: null, scanner: null, inviando: false, bloccoScan: false,
+  ruolo: LS.get('ruolo','autista'), foglio: LS.get('foglio',''), chiaveAutisti: LS.get('chiaveAutisti',''), daCaricare: []
 };
 const $ = s => document.querySelector(s);
 const oggi = () => { const d = new Date(); return ymd(d); };
@@ -354,10 +404,20 @@ function avvia(){
   $('#h-nome').textContent = S.nome;
   $('#h-giorno').textContent = dataLunga(oggi());
   mostra('#v-home');
+  segnaRuolo(); caricaProfilo();
   segnaZona(); disegnaPendenti();
   S.consegne = LS.get('consegne', []); disegnaLista();
   caricaGiorno(); svuotaCoda();
 }
+async function caricaProfilo(){
+  try{
+    const j = await api('profilo');
+    S.ruolo = j.ruolo; LS.set('ruolo', j.ruolo);
+    if(j.ruolo==='manager'){ S.foglio = j.foglio; S.chiaveAutisti = j.chiaveAutisti; LS.set('foglio', j.foglio); LS.set('chiaveAutisti', j.chiaveAutisti); }
+    segnaRuolo();
+  }catch(e){ if(e.server) toast(e.message); }
+}
+function segnaRuolo(){ $('#h-ruolo').classList.toggle('hidden', S.ruolo!=='manager'); }
 function segnaZona(){
   document.querySelectorAll('.zone button').forEach(b => b.setAttribute('aria-pressed', b.dataset.zona===S.zona));
 }
@@ -408,10 +468,30 @@ function schedaConsegna(picking){
     ${c.stato==='Mancata consegna'?`<p>Non consegnato${c.motivo?': '+esc(c.motivo):''}${c.tentativi>1?' ('+c.tentativi+' tentativi)':''}. Riprogrammato per ${esc(dataLunga(c.data))}.</p>`:''}
     <a class="btn sec pieno" href="${mappe}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">Apri in Mappe</a>
     ${c.stato!=='Consegnato'?`<button class="btn rosso pieno" id="b-sch-man">Non consegnato…</button>`:''}
+    ${S.ruolo==='manager' ? `<div class="gestione">
+      <p class="sottot">Gestione (manager)</p>
+      <div class="manuale"><input type="date" id="sch-data" value="${esc(c.data)}" aria-label="Nuova data di consegna"><button class="btn sec" id="b-sch-sposta">Sposta</button></div>
+      ${c.stato!=='Consegnato'?`<button class="btn sec pieno" id="b-sch-mano" style="margin-top:8px">Segna consegnata a mano (bolla firmata)</button>`:''}
+      <button class="btn sec pieno" id="b-sch-elimina" style="margin-top:8px;color:var(--rosso)">Elimina consegna</button>
+    </div>` : ''}
     <button class="btn sec pieno" id="b-sch-chiudi">Chiudi</button>
   </div></div>`;
   $('#b-sch-chiudi').onclick = chiudiModale;
   const b = $('#b-sch-man'); if(b) b.onclick = () => mancata(picking);
+  if(S.ruolo!=='manager') return;
+  const aggiorna = j => { const i = S.consegne.findIndex(x=>x.picking===picking); if(i>=0 && j.consegna) S.consegne[i] = j.consegna; caricaGiorno(); };
+  $('#b-sch-sposta').onclick = async () => {
+    const d = $('#sch-data').value; if(!d) return;
+    try{ const j = await api('sposta', {picking, data:d}); chiudiModale(); toast(c.cliente+' spostata a '+dataLunga(d)+'.'); aggiorna(j); }catch(e){ toast(e.message); }
+  };
+  const bm = $('#b-sch-mano'); if(bm) bm.onclick = async () => {
+    try{ const j = await api('chiudiAMano', {picking}); chiudiModale(); toast(c.cliente+': segnata come consegnata.'); aggiorna(j); }catch(e){ toast(e.message); }
+  };
+  const be = $('#b-sch-elimina'); let pronto = false;
+  be.onclick = async () => {
+    if(!pronto){ pronto = true; be.textContent = 'Tocca di nuovo per eliminare '+c.cliente; be.classList.add('rosso'); be.style.color='#fff'; return; }
+    try{ await api('eliminaConsegna', {picking}); chiudiModale(); toast(c.cliente+' eliminata.'); S.consegne = S.consegne.filter(x=>x.picking!==picking); disegnaLista(); caricaGiorno(); }catch(e){ toast(e.message); }
+  };
 }
 
 /* scelta di un cliente da segnare come non consegnato (dallo scanner) */
@@ -676,7 +756,7 @@ function prossimoLavorativo(){
   return ymd(d);
 }
 async function importaFile(files){
-  const log = $('#import-log'); log.textContent = '';
+  const log = $('#import-log'); log.textContent = ''; $('#anteprima').innerHTML = '';
   if(!window.XLSX){ log.textContent = 'Libreria Excel non caricata: controlla la connessione e ricarica la pagina.'; return; }
   const letti = [];
   for(const f of files){
@@ -689,16 +769,100 @@ async function importaFile(files){
       letti.push(Object.assign(trovato, {nome:f.name}));
     }catch(e){ log.textContent += `✗ ${f.name}: file non leggibile (${e.message}).\n`; }
   }
+  $('#in-file').value = '';
+  if(!letti.length) return;
   letti.sort((a,b) => (a.tipo==='picking'?0:1)-(b.tipo==='picking'?0:1));   // prima il picking, poi il dettaglio
-  for(const x of letti){
+  S.daCaricare = letti;
+  mostraAnteprima();
+}
+function mostraAnteprima(){
+  const L = S.daCaricare, d = $('#in-data-import').value;
+  $('#anteprima').innerHTML = `<div class="prev">${L.map(x => {
+      const colli = x.righe.reduce((a,r)=>a+(Number(r.colli)||0),0);
+      const bi = x.tipo==='picking' ? x.righe.filter(r=>String(r.prov||'').toUpperCase()==='BI').length : null;
+      return `<b>${esc(x.nome)}</b>${x.tipo==='picking'
+        ? `${x.righe.length} consegne · ${colli} colli · ${bi} Biella, ${x.righe.length-bi} fuori Biella`
+        : `Dettaglio carta: indirizzi e pallet per ${x.righe.length} consegne`}`;
+    }).join('<br>')}
+    <p style="margin:8px 0 0">Consegne del <b style="display:inline">${d?esc(dataLunga(d)):'—'}</b></p>
+    <div class="riga-btn"><button class="btn sec" id="b-prev-no">Annulla</button><button class="btn verde" id="b-prev-si">Carica</button></div></div>`;
+  $('#b-prev-no').onclick = () => { S.daCaricare = []; $('#anteprima').innerHTML = ''; };
+  $('#b-prev-si').onclick = confermaImport;
+}
+async function confermaImport(){
+  const L = S.daCaricare, log = $('#import-log'); $('#anteprima').innerHTML = ''; S.daCaricare = [];
+  for(const x of L){
     try{
-      const j = await api('importa', {tipo:x.tipo, righe:x.righe, dataConsegna:$('#in-data-import').value});
-      log.textContent += `✓ ${x.nome} (${x.tipo==='picking'?'picking':'dettaglio carta'}): ${j.nuove} nuove, ${j.aggiornate} aggiornate`+
+      const j = await api('importa', {tipo:x.tipo, righe:x.righe, file:x.nome, dataConsegna:$('#in-data-import').value});
+      log.textContent += `✓ ${x.nome}: ${j.nuove} nuove, ${j.aggiornate} aggiornate`+
         (j.riproposte?`, ${j.riproposte} già rimandate`:'')+` · consegne del ${dataLunga(j.dataConsegna)}\n`;
     }catch(e){ log.textContent += `✗ ${x.nome}: ${e.message}\n`; }
   }
-  $('#in-file').value = '';
-  caricaGiorno();
+  caricaGiorno(); caricaCaricamenti(); riepilogo();
+}
+
+/* ---- caricamenti: elenco ed eliminazione ---- */
+async function caricaCaricamenti(){
+  const el = $('#car-lista');
+  try{
+    const j = await api('caricamenti');
+    if(!j.caricamenti.length){ el.innerHTML = '<li class="vuoto">Nessun file caricato finora.</li>'; return; }
+    el.innerHTML = j.caricamenti.map(x => {
+      const attivo = x.stato==='Attivo';
+      return `<li class="car ${attivo?'':'eliminato'}"><div class="testo">
+        <div class="cli">${esc(x.file || x.tipo)}</div>
+        <div class="dove">${esc(x.tipo)} · caricato il ${esc(x.quando)} · consegne del ${esc(x.dataConsegna.split('-').reverse().slice(0,2).join('/'))}</div>
+        <div class="dove">${attivo ? `${x.presenti===1?'1 consegna creata':x.presenti+' consegne create'}${x.lavorate?` · <b>${x.lavorate} già lavorate</b>`:''}${x.aggiornate?` · ${x.aggiornate} aggiornate`:''}` : esc(x.stato)}</div>
+      </div>${attivo && x.presenti ? `<button class="li-btn" data-elimina="${esc(x.id)}" data-nome="${esc(x.file||x.tipo)}">Elimina</button>` : ''}</li>`;
+    }).join('');
+    document.querySelectorAll('[data-elimina]').forEach(b => b.onclick = () => eliminaCaricamento(b.dataset.elimina, b.dataset.nome));
+  }catch(e){ el.innerHTML = `<li class="vuoto">${esc(e.server ? e.message : 'Serve la rete per vedere i caricamenti.')}</li>`; }
+}
+async function eliminaCaricamento(id, nome, forza){
+  try{
+    const j = await api('eliminaCaricamento', {id, forza:!!forza});
+    if(j.esito==='conferma'){
+      $('#modale').innerHTML = `<div class="velo"><div class="foglio" role="dialog" aria-labelledby="t-el">
+        <h2 id="t-el">Alcune consegne sono già state lavorate</h2>
+        <p>Il file <b>${esc(nome)}</b> ha creato ${j.totale} consegne. Di queste, ${j.lavorate.length} hanno già colli scansionati o un esito. Eliminando il file spariscono anche loro e i loro colli.</p>
+        <div class="scorri"><ul class="lista">${j.lavorate.map(c=>`<li><div class="testo"><div class="cli">${esc(c.cliente)}</div><div class="dove">Picking ${esc(c.picking)}</div></div><span class="stato ${classeStato(c.stato)}">${esc(c.stato)}</span></li>`).join('')}</ul></div>
+        <div class="riga-btn"><button class="btn sec" id="b-el-no">Annulla</button><button class="btn rosso" id="b-el-si">Elimina tutto</button></div>
+      </div></div>`;
+      $('#b-el-no').onclick = chiudiModale;
+      $('#b-el-si').onclick = () => { chiudiModale(); eliminaCaricamento(id, nome, true); };
+      return;
+    }
+    toast(`${nome} eliminato: ${j.tolte===1?'tolta 1 consegna':'tolte '+j.tolte+' consegne'}.`);
+    caricaCaricamenti(); caricaGiorno(); riepilogo();
+  }catch(e){ toast(e.server ? e.message : 'Serve la rete per eliminare un caricamento.'); }
+}
+
+/* ---- riepilogo del giorno ---- */
+async function riepilogo(){
+  const el = $('#riep'), d = $('#r-data').value || oggi();
+  try{
+    const j = await api('giorno', {data:d});
+    const L = j.consegne.filter(c => c.data===d || c.stato==='Mancata consegna' || c.data<d);
+    const conta = f => L.filter(f).length;
+    const colli = L.reduce((a,c)=>a+c.colli,0), car = L.reduce((a,c)=>a+c.caricati,0);
+    const cons = conta(c=>c.stato==='Consegnato'), manc = conta(c=>c.stato==='Mancata consegna');
+    const zona = z => { const Z = L.filter(c=>c.zona===z); return `<tr><td>${z}</td><td>${Z.length}</td><td>${Z.filter(c=>c.stato==='Consegnato').length}</td><td>${Z.filter(c=>c.stato==='Mancata consegna').length}</td></tr>`; };
+    const aut = {};
+    L.forEach(c => { if(!c.autista) return; const a = aut[c.autista] = aut[c.autista] || {n:0, cons:0, colli:0}; a.n++; a.colli += c.caricati; if(c.stato==='Consegnato') a.cons++; });
+    el.innerHTML = !L.length ? '<p>Nessuna consegna per questo giorno.</p>' : `
+      <div class="numeri">
+        <div><b>${L.length}</b>consegne</div><div><b>${car}/${colli}</b>colli caricati</div><div><b>${conta(c=>c.caricati===0 && c.stato!=='Consegnato')}</b>da caricare</div>
+        <div class="verde"><b>${cons}</b>consegnate</div><div><b>${L.length-cons-manc}</b>in corso</div><div class="rosso"><b>${manc}</b>non consegnate</div>
+      </div>
+      <table class="tab-mini"><tr><th>Zona</th><th>Consegne</th><th>Fatte</th><th>Mancate</th></tr>${zona('Biella')}${zona('Fuori Biella')}</table>
+      ${Object.keys(aut).length ? `<table class="tab-mini"><tr><th>Autista</th><th>Consegne</th><th>Fatte</th><th>Colli</th></tr>${Object.entries(aut).map(([n,a])=>`<tr><td>${esc(n)}</td><td>${a.n}</td><td>${a.cons}</td><td>${a.colli}</td></tr>`).join('')}</table>` : ''}
+      ${manc ? `<p class="sottot">Non consegnate</p><ul class="lista">${L.filter(c=>c.stato==='Mancata consegna').map(c=>`<li class="tocca" data-r="${esc(c.picking)}"><div class="testo"><div class="cli">${esc(c.cliente)}</div><div class="dove">${esc(c.motivo||'')}${c.tentativi>1?' · '+c.tentativi+' tentativi':''} · riprogrammata ${esc(dataLunga(c.data))}</div></div><span class="freccia">›</span></li>`).join('')}</ul>` : ''}`;
+    document.querySelectorAll('#riep [data-r]').forEach(li => li.onclick = () => { if(!S.consegne.find(x=>x.picking===li.dataset.r)) S.consegne.push(L.find(x=>x.picking===li.dataset.r)); schedaConsegna(li.dataset.r); });
+  }catch(e){ el.innerHTML = `<p>${esc(e.server ? e.message : 'Serve la rete per il riepilogo.')}</p>`; }
+}
+
+function linkAutisti(){
+  return location.origin + location.pathname + '?s=' + encodeURIComponent(S.url) + '&k=' + encodeURIComponent(S.chiaveAutisti);
 }
 
 /* ================= EVENTI ================= */
@@ -714,18 +878,41 @@ $('#b-salva-setup').onclick = () => {
 };
 $('#b-menu').onclick = () => {
   mostra('#v-ufficio');
+  const man = S.ruolo==='manager';
+  $('#m-manager').classList.toggle('hidden', !man);
+  $('#m-sotto').textContent = man ? 'Picking, caricamenti e autisti' : 'Turno di lavoro';
+  if(man){
+    if(!$('#r-data').value) $('#r-data').value = oggi();
+    riepilogo(); caricaCaricamenti();
+    if(S.foglio) $('#b-foglio').href = S.foglio;
+  }
   $('#t-nome').textContent = S.nome;
   const n = S.coda.length, q = $('#t-coda');
   q.className = n ? 'attesa' : '';
   q.textContent = n ? (n===1 ? '1 scansione non è ancora stata inviata: partirà appena torna la rete. Aspetta prima di uscire.' : n+' scansioni non sono ancora state inviate: partiranno appena torna la rete. Aspetta prima di uscire.') : 'Tutte le scansioni sono state inviate all\'ufficio.';
   const d = $('#in-data-import'); if(!d.value) d.value = prossimoLavorativo();
 };
-$('#in-data-import').onchange = e => e.target.dataset.toccata = '1';
+$('#in-data-import').onchange = e => { e.target.dataset.toccata = '1'; if(S.daCaricare.length) mostraAnteprima(); };
+$('#r-data').onchange = riepilogo;
+$('#b-agg-car').onclick = caricaCaricamenti;
+$('#b-link-copia').onclick = async () => {
+  if(!S.chiaveAutisti) return toast('Apri il menu con la rete attiva e riprova.');
+  try{ await navigator.clipboard.writeText(linkAutisti()); toast('Link degli autisti copiato.'); }catch(e){
+    $('#modale').innerHTML = `<div class="velo"><div class="foglio"><h2>Link degli autisti</h2><p>Tieni premuto sul testo per copiarlo.</p><textarea readonly>${esc(linkAutisti())}</textarea><button class="btn sec pieno" id="b-lk-ok">Chiudi</button></div></div>`;
+    $('#b-lk-ok').onclick = chiudiModale;
+  }
+};
+$('#b-link-share').onclick = async () => {
+  if(!S.chiaveAutisti) return toast('Apri il menu con la rete attiva e riprova.');
+  const testo = 'Ciao! Questa è l\'app per i colli Mondoffice. Aprila da iPhone con Safari, poi Condividi › Aggiungi alla schermata Home:\n' + linkAutisti();
+  if(navigator.share){ try{ await navigator.share({text: testo}); }catch(e){} }
+  else window.open('https://wa.me/?text=' + encodeURIComponent(testo), '_blank');
+};
 $('#b-indietro').onclick = avvia;
 $('#in-file').onchange = e => e.target.files.length && importaFile([...e.target.files]);
 $('#b-esci').onclick = () => {
   // server e chiave restano salvati: si cambia solo chi usa il telefono
-  S.nome = ''; LS.set('nome', ''); S.attiva = null;
+  S.nome = ''; LS.set('nome', ''); S.attiva = null; S.daCaricare = [];
   $('#in-nome').value = '';
   avvia();
 };
