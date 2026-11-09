@@ -140,6 +140,10 @@ label.campo{display:block;font-size:14px;color:var(--grigio);margin-bottom:12px}
 label.campo input{display:block;width:100%;margin-top:4px;border:1px solid var(--linea);border-radius:8px;padding:11px;font-size:16px;background:#fff}
 .file{display:block;border:2px dashed var(--linea);border-radius:var(--r);padding:22px;text-align:center;font-weight:600;color:var(--blu);background:#f7f9fb}
 .file input{display:none}
+.turno{display:flex;flex-direction:column;background:#f3f6fa;border:1px solid var(--linea);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.turno span{font-size:13px;color:var(--grigio)}
+.turno b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:26px;line-height:1.15}
+#t-coda.attesa{color:#7a5a00;background:#fff7d6;border-radius:8px;padding:10px 12px}
 .log{font-size:14px;white-space:pre-wrap;margin-top:12px}
 nav.tab{display:flex;gap:8px;margin-bottom:16px}
 nav.tab button{flex:1;border:1px solid var(--linea);background:#fff;border-radius:8px;padding:10px;font-weight:600}
@@ -153,7 +157,7 @@ nav.tab button[aria-pressed=true]{background:var(--inchiostro);color:#fff;border
 
 <!-- ============ PRIMO AVVIO ============ -->
 <section id="v-setup" class="hidden">
-  <header><div class="chi"><div class="nome">Bimi Colli</div><div class="giorno">Primo avvio</div></div></header>
+  <header><div class="chi"><div class="nome">Bimi Colli</div><div class="giorno">Inizio turno</div></div></header>
   <main>
     <div class="card">
       <h2>Chi sei?</h2>
@@ -173,7 +177,7 @@ nav.tab button[aria-pressed=true]{background:var(--inchiostro);color:#fff;border
   <header>
     <div class="chi"><div class="nome" id="h-nome"></div><div class="giorno" id="h-giorno"></div></div>
     <span class="sync" id="h-sync">In linea</span>
-    <button class="icona-btn" id="b-menu" aria-label="Ufficio e impostazioni">☰</button>
+    <button class="icona-btn" id="b-menu" aria-label="Menu">☰</button>
   </header>
   <main>
     <div class="modi">
@@ -195,7 +199,7 @@ nav.tab button[aria-pressed=true]{background:var(--inchiostro);color:#fff;border
 <section id="v-ufficio" class="hidden">
   <header>
     <button class="icona-btn" id="b-indietro" aria-label="Indietro">‹</button>
-    <div class="chi"><div class="nome">Ufficio</div><div class="giorno">Import picking e impostazioni</div></div>
+    <div class="chi"><div class="nome">Menu</div><div class="giorno">Picking e turno di lavoro</div></div>
   </header>
   <main>
     <div class="card">
@@ -206,11 +210,11 @@ nav.tab button[aria-pressed=true]{background:var(--inchiostro);color:#fff;border
       <div class="log" id="import-log"></div>
     </div>
     <div class="card">
-      <h2>Impostazioni</h2>
-      <label class="campo">Nome<input id="set-nome"></label>
-      <label class="campo">Indirizzo del server<input id="set-url" inputmode="url"></label>
-      <label class="campo">Chiave<input id="set-chiave"></label>
-      <button class="btn pieno" id="b-salva-set">Salva</button>
+      <h2>Turno di lavoro</h2>
+      <div class="turno"><span>In servizio</span><b id="t-nome"></b></div>
+      <p id="t-coda"></p>
+      <p>A fine giornata, o se il telefono passa a un altro autista, tocca <b>Fine turno</b>: al prossimo avvio l'app chiederà il nome di chi lo usa.</p>
+      <button class="btn rosso pieno" id="b-esci">Fine turno · Esci</button>
     </div>
   </main>
 </section>
@@ -371,7 +375,7 @@ function disegnaLista(){
   $('#r-sx').textContent = lista.length + (lista.length===1?' consegna':' consegne') + ' · ' + tot + ' colli';
   $('#r-dx').textContent = car + ' caricati · ' + con + ' consegnate';
   if(!lista.length){
-    $('#lista').innerHTML = `<li class="vuoto">Nessuna consegna per oggi in questa zona.<br>Il picking si carica dal menu ☰ › Ufficio.</li>`;
+    $('#lista').innerHTML = `<li class="vuoto">Nessuna consegna per oggi in questa zona.<br>Il picking si carica dal menu ☰.</li>`;
     return;
   }
   $('#lista').innerHTML = lista.map(c => `
@@ -710,15 +714,20 @@ $('#b-salva-setup').onclick = () => {
 };
 $('#b-menu').onclick = () => {
   mostra('#v-ufficio');
-  $('#set-nome').value = S.nome; $('#set-url').value = S.url; $('#set-chiave').value = S.chiave;
+  $('#t-nome').textContent = S.nome;
+  const n = S.coda.length, q = $('#t-coda');
+  q.className = n ? 'attesa' : '';
+  q.textContent = n ? (n===1 ? '1 scansione non è ancora stata inviata: partirà appena torna la rete. Aspetta prima di uscire.' : n+' scansioni non sono ancora state inviate: partiranno appena torna la rete. Aspetta prima di uscire.') : 'Tutte le scansioni sono state inviate all\'ufficio.';
   const d = $('#in-data-import'); if(!d.value) d.value = prossimoLavorativo();
 };
 $('#in-data-import').onchange = e => e.target.dataset.toccata = '1';
 $('#b-indietro').onclick = avvia;
 $('#in-file').onchange = e => e.target.files.length && importaFile([...e.target.files]);
-$('#b-salva-set').onclick = () => {
-  S.nome = $('#set-nome').value.trim() || S.nome; S.url = $('#set-url').value.trim(); S.chiave = $('#set-chiave').value.trim();
-  LS.set('nome', S.nome); LS.set('url', S.url); LS.set('chiave', S.chiave); toast('Impostazioni salvate'); avvia();
+$('#b-esci').onclick = () => {
+  // server e chiave restano salvati: si cambia solo chi usa il telefono
+  S.nome = ''; LS.set('nome', ''); S.attiva = null;
+  $('#in-nome').value = '';
+  avvia();
 };
 document.addEventListener('visibilitychange', () => { if(!document.hidden && !$('#v-home').classList.contains('hidden')) caricaGiorno(); });
 
