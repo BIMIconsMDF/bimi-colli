@@ -249,7 +249,7 @@ const CONFIG = {
     const q = new URLSearchParams(location.search);
     if(q.get('s')) localStorage.setItem('bimi_url', JSON.stringify(q.get('s')));
     if(q.get('k')) localStorage.setItem('bimi_chiave', JSON.stringify(q.get('k')));
-    if(q.get('s') || q.get('k')) history.replaceState(null, '', location.pathname);
+    // il link resta com'è: così "Aggiungi alla schermata Home" salva anche server e chiave
   }catch(e){}
 })();
 
