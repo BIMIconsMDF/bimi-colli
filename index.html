@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bimi Colli">
+<meta name="theme-color" content="#12409A">
+<title>Bimi Colli</title>
+<link rel="apple-touch-icon" href="icona.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blu:#12409A; --blu-scuro:#0C2C6B; --verde:#1E9E5A; --verde-scuro:#147142;
+  --cemento:#E9ECEF; --carta:#FFFFFF; --inchiostro:#15202B; --grigio:#5B6672; --linea:#CDD3D9;
+  --etichetta:#F4E23B; --rosso:#C8372D; --ambra:#F2A900;
+  --r:10px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--cemento);color:var(--inchiostro);font:16px/1.4 Barlow,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ambra);outline-offset:2px}
+.hidden{display:none!important}
+.cond{font-family:"Barlow Condensed",Barlow,sans-serif}
+
+/* barra alta */
+header{background:var(--blu);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 16px 12px;display:flex;align-items:center;gap:12px}
+header .chi{flex:1;min-width:0}
+header .nome{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:22px;line-height:1.1}
+header .giorno{font-size:14px;opacity:.8}
+.sync{font-size:13px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.15);white-space:nowrap}
+.sync.coda{background:var(--ambra);color:var(--inchiostro)}
+.sync.off{background:var(--rosso)}
+.icona-btn{background:none;border:0;color:#fff;padding:6px;font-size:22px;line-height:1}
+
+main{padding:16px;max-width:640px;margin:0 auto;padding-bottom:calc(env(safe-area-inset-bottom) + 24px)}
+
+/* pulsanti modalità */
+.modi{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.modo{border:0;border-radius:var(--r);color:#fff;padding:18px 14px 16px;text-align:left;min-height:116px;display:flex;flex-direction:column;justify-content:space-between}
+.modo b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:34px;line-height:1;letter-spacing:.5px}
+.modo span{font-size:14px;opacity:.9}
+.modo.carico{background:var(--blu)}
+.modo.consegna{background:var(--verde)}
+.modo:active{filter:brightness(.9)}
+
+.avviso{background:#fff7d6;border:1px solid #e8cf63;border-radius:var(--r);padding:12px 14px;margin-bottom:16px;font-size:15px}
+.avviso button{margin-top:8px}
+
+/* zone */
+.zone{display:flex;background:#d5dae0;border-radius:99px;padding:3px;margin-bottom:12px}
+.zone button{flex:1;border:0;background:none;padding:8px 6px;border-radius:99px;font-weight:600;font-size:15px;color:var(--grigio)}
+.zone button[aria-pressed=true]{background:#fff;color:var(--inchiostro);box-shadow:0 1px 2px rgba(21,32,43,.15)}
+
+.riepilogo{display:flex;justify-content:space-between;font-size:14px;color:var(--grigio);margin:0 2px 8px}
+
+/* elenco consegne */
+.lista{list-style:none;margin:0;padding:0;background:var(--carta);border-radius:var(--r);border:1px solid var(--linea)}
+.lista li{display:flex;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--linea)}
+.lista li:first-child{border-top:0}
+.lista .testo{flex:1;min-width:0}
+.lista .cli{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lista .dove{font-size:14px;color:var(--grigio);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conta{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:22px;min-width:58px;text-align:right}
+.conta small{font-size:15px;color:var(--grigio);font-weight:600}
+.stato{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:99px;margin-top:3px;background:#e4e8ec;color:var(--grigio)}
+.stato.Caricato{background:#dbe8fb;color:var(--blu-scuro)}
+.stato.Consegnato{background:#d9f2d9;color:var(--verde-scuro)}
+.stato.Mancata{background:#f8d7d7;color:#8e221a}
+.stato.parziale{background:#fff2cc;color:#7a5a00}
+.li-btn{border:1px solid var(--linea);background:#fff;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:600;margin:3px 0 0 6px;color:#8e221a}
+.vuoto{padding:28px 18px;text-align:center;color:var(--grigio)}
+
+/* scanner */
+#scanner{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;z-index:10}
+#scanner .top{position:relative;flex:0 0 42vh;overflow:hidden;background:#000}
+#camera{width:100%;height:100%}
+#camera video{object-fit:cover!important;width:100%!important;height:100%!important}
+.mirino{position:absolute;left:8%;right:8%;top:30%;height:40%;border:3px solid rgba(255,255,255,.85);border-radius:12px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}
+.banda{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;display:flex;justify-content:space-between;align-items:center;color:#fff;background:linear-gradient(rgba(0,0,0,.55),transparent)}
+.banda b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:26px}
+.banda .chiudi{background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:99px;padding:8px 16px;font-weight:600}
+.lampo{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .35s}
+.lampo.on{opacity:.55;transition:none}
+#scanner .sotto{flex:1;background:var(--cemento);overflow:auto;padding:14px 16px calc(env(safe-area-inset-bottom) + 14px);display:flex;flex-direction:column;gap:12px}
+
+/* cartellino consegna attiva: richiama l'etichetta gialla Mondoffice */
+.cartellino{background:var(--etichetta);border-radius:6px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:2px 12px;border:1.5px solid #c9b81f}
+.cartellino .k{font-size:13px;color:#4d4610}
+.cartellino .cli{font-weight:700;font-size:17px;line-height:1.2;grid-column:1}
+.cartellino .dove{font-size:14px;grid-column:1}
+.cartellino .num{grid-row:1/4;grid-column:2;align-self:center;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:46px;line-height:1;text-align:right}
+.cartellino .num small{font-size:24px}
+.cartellino .azioni{grid-column:1/3;display:flex;gap:8px;margin-top:8px}
+.cartellino.nessuno{background:#fff;border:1.5px dashed var(--linea)}
+.cartellino.nessuno .cli{font-weight:600;color:var(--grigio)}
+
+.esito{border-radius:var(--r);padding:12px 14px;background:#fff;border-left:6px solid var(--linea);font-size:15px}
+.esito b{display:block;font-size:17px}
+.esito.ok{border-color:var(--verde)} .esito.warn{border-color:var(--ambra)} .esito.err{border-color:var(--rosso)}
+.manuale{display:flex;gap:8px}
+.manuale input{flex:1;min-width:0;border:1px solid var(--linea);border-radius:8px;padding:12px;font-size:17px;background:#fff}
+
+.btn{border:0;border-radius:8px;padding:12px 16px;font-weight:600;font-size:16px;background:var(--blu);color:#fff}
+.btn.sec{background:#fff;color:var(--inchiostro);border:1px solid var(--linea)}
+.btn.rosso{background:var(--rosso)}
+.btn.verde{background:var(--verde)}
+.btn.pieno{width:100%}
+.btn:disabled{opacity:.5}
+
+/* fogli modali */
+.velo{position:fixed;inset:0;background:rgba(10,20,30,.5);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.foglio{background:var(--cemento);width:100%;max-width:640px;max-height:88vh;border-radius:16px 16px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 16px);display:flex;flex-direction:column;gap:12px}
+.foglio h2{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:26px;line-height:1.1}
+.foglio p{margin:0;color:var(--grigio);font-size:15px}
+.foglio .scorri{overflow:auto;flex:1;min-height:120px}
+.cerca{border:1px solid var(--linea);border-radius:8px;padding:12px;font-size:17px;width:100%;background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1px solid var(--linea);background:#fff;border-radius:99px;padding:10px 14px;font-weight:600}
+.chips button[aria-pressed=true]{background:var(--rosso);border-color:var(--rosso);color:#fff}
+textarea{width:100%;border:1px solid var(--linea);border-radius:8px;padding:10px;min-height:70px;background:#fff}
+.riga-btn{display:flex;gap:10px}
+.riga-btn .btn{flex:1}
+.scelta li{cursor:pointer}
+.scelta li:active{background:#f1f4f7}
+
+/* ufficio */
+.card{background:#fff;border:1px solid var(--linea);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.card h2{margin:0 0 6px;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:26px}
+.card p{margin:0 0 12px;color:var(--grigio);font-size:15px}
+label.campo{display:block;font-size:14px;color:var(--grigio);margin-bottom:12px}
+label.campo input{display:block;width:100%;margin-top:4px;border:1px solid var(--linea);border-radius:8px;padding:11px;font-size:16px;background:#fff}
+.file{display:block;border:2px dashed var(--linea);border-radius:var(--r);padding:22px;text-align:center;font-weight:600;color:var(--blu);background:#f7f9fb}
+.file input{display:none}
+.log{font-size:14px;white-space:pre-wrap;margin-top:12px}
+nav.tab{display:flex;gap:8px;margin-bottom:16px}
+nav.tab button{flex:1;border:1px solid var(--linea);background:#fff;border-radius:8px;padding:10px;font-weight:600}
+nav.tab button[aria-pressed=true]{background:var(--inchiostro);color:#fff;border-color:var(--inchiostro)}
+
+.toast{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 16px);background:var(--inchiostro);color:#fff;border-radius:var(--r);padding:12px 16px;z-index:30;max-width:600px;margin:0 auto}
+@media (prefers-reduced-motion: reduce){.lampo{transition:none}}
+</style>
+</head>
+<body>
+
+<!-- ============ PRIMO AVVIO ============ -->
+<section id="v-setup" class="hidden">
+  <header><div class="chi"><div class="nome">Bimi Colli</div><div class="giorno">Primo avvio</div></div></header>
+  <main>
+    <div class="card">
+      <h2>Chi sei?</h2>
+      <p>Il nome compare nel foglio accanto a ogni collo che scansioni.</p>
+      <label class="campo">Nome e cognome<input id="in-nome" autocomplete="name" placeholder="Es. Marco Rossi"></label>
+      <div id="campi-server">
+        <label class="campo">Indirizzo del server (dall'ufficio)<input id="in-url" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec"></label>
+        <label class="campo">Chiave<input id="in-chiave" placeholder="Chiave fornita dall'ufficio"></label>
+      </div>
+      <button class="btn pieno" id="b-salva-setup">Inizia</button>
+    </div>
+  </main>
+</section>
+
+<!-- ============ HOME ============ -->
+<section id="v-home" class="hidden">
+  <header>
+    <div class="chi"><div class="nome" id="h-nome"></div><div class="giorno" id="h-giorno"></div></div>
+    <span class="sync" id="h-sync">In linea</span>
+    <button class="icona-btn" id="b-menu" aria-label="Ufficio e impostazioni">☰</button>
+  </header>
+  <main>
+    <div class="modi">
+      <button class="modo carico" data-modo="carico"><b>Carico</b><span>Scansiona i colli che sali sul furgone</span></button>
+      <button class="modo consegna" data-modo="consegna"><b>Consegna</b><span>Scansiona i colli che lasci al cliente</span></button>
+    </div>
+    <div id="pendenti"></div>
+    <div class="zone" role="group" aria-label="Zona">
+      <button data-zona="Biella" aria-pressed="true">Biella</button>
+      <button data-zona="Fuori Biella" aria-pressed="false">Fuori Biella</button>
+      <button data-zona="tutte" aria-pressed="false">Tutte</button>
+    </div>
+    <div class="riepilogo"><span id="r-sx"></span><span id="r-dx"></span></div>
+    <ul class="lista" id="lista"></ul>
+  </main>
+</section>
+
+<!-- ============ UFFICIO ============ -->
+<section id="v-ufficio" class="hidden">
+  <header>
+    <button class="icona-btn" id="b-indietro" aria-label="Indietro">‹</button>
+    <div class="chi"><div class="nome">Ufficio</div><div class="giorno">Import picking e impostazioni</div></div>
+  </header>
+  <main>
+    <div class="card">
+      <h2>Carica il picking</h2>
+      <p>Seleziona i file Excel di Mondoffice (picking e, se c'è, dettaglio carta). La data di consegna viene letta dal nome del file; puoi cambiarla.</p>
+      <label class="campo">Consegne del giorno<input type="date" id="in-data-import"></label>
+      <label class="file">Scegli file Excel<input type="file" id="in-file" accept=".xlsx,.xls,.csv" multiple></label>
+      <div class="log" id="import-log"></div>
+    </div>
+    <div class="card">
+      <h2>Impostazioni</h2>
+      <label class="campo">Nome<input id="set-nome"></label>
+      <label class="campo">Indirizzo del server<input id="set-url" inputmode="url"></label>
+      <label class="campo">Chiave<input id="set-chiave"></label>
+      <button class="btn pieno" id="b-salva-set">Salva</button>
+    </div>
+  </main>
+</section>
+
+<!-- ============ SCANNER ============ -->
+<section id="scanner" class="hidden" aria-label="Scanner">
+  <div class="top">
+    <div id="camera"></div>
+    <div class="mirino"></div>
+    <div class="lampo" id="lampo"></div>
+    <div class="banda"><b id="s-modo">Carico</b><button class="chiudi" id="b-chiudi">Fine</button></div>
+  </div>
+  <div class="sotto">
+    <div class="cartellino nessuno" id="cartellino"></div>
+    <div class="esito" id="esito"><b>Inquadra il codice grande in basso sull'etichetta</b>Il numero che inizia con 0, sotto le barre.</div>
+    <div class="manuale">
+      <input id="in-codice" inputmode="numeric" placeholder="Etichetta rovinata? Scrivi il numero collo">
+      <button class="btn sec" id="b-manuale">Invia</button>
+    </div>
+  </div>
+</section>
+
+<div id="modale"></div>
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ================= CONFIGURAZIONE =================
+   Server e chiave arrivano dal link di configurazione (vedi GUIDA),
+   così non restano scritti nel file pubblicato. */
+const CONFIG = {
+  SERVER_URL: '',                 // facoltativo: URL del deployment Apps Script (…/exec)
+  CHIAVE: '',                     // facoltativo: stessa CHIAVE di Code.gs (meglio usare il link ?s=…&k=…)
+  COLLO_REGEX: /^0\d{7}$/,        // numero collo Mondoffice: 8 cifre che iniziano con 0
+};
+
+/* link di configurazione: index.html?s=URL_SERVER&k=CHIAVE (da mandare una volta agli autisti) */
+(function(){
+  try{
+    const q = new URLSearchParams(location.search);
+    if(q.get('s')) localStorage.setItem('bimi_url', JSON.stringify(q.get('s')));
+    if(q.get('k')) localStorage.setItem('bimi_chiave', JSON.stringify(q.get('k')));
+    if(q.get('s') || q.get('k')) history.replaceState(null, '', location.pathname);
+  }catch(e){}
+})();
+
+/* ================= STATO ================= */
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem('bimi_'+k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('bimi_'+k, JSON.stringify(v)); }catch(e){} }
+};
+const S = {
+  nome: LS.get('nome',''), url: LS.get('url', CONFIG.SERVER_URL), chiave: LS.get('chiave', CONFIG.CHIAVE),
+  zona: LS.get('zona','Biella'), consegne: [], motivi: ['Cliente assente','Chiuso','Rifiutato','Indirizzo errato','Merce danneggiata','Altro'],
+  modo: 'carico', attiva: null, coda: LS.get('coda', []), pendenti: LS.get('pendenti', []),
+  ultimo: {codice:'', t:0}, pos: null, scanner: null, inviando: false, bloccoScan: false
+};
+const $ = s => document.querySelector(s);
+const oggi = () => { const d = new Date(); return ymd(d); };
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function dataLunga(s){ const [y,m,d]=s.split('-'); return new Date(+y,+m-1,+d).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); }
+
+/* ================= SERVER ================= */
+async function api(azione, dati){
+  if(!S.url) throw new Error('Server non configurato');
+  const r = await fetch(S.url, {method:'POST', body: JSON.stringify(Object.assign({chiave:S.chiave, azione, autista:S.nome}, dati))});
+  const j = await r.json();
+  if(!j.ok) throw Object.assign(new Error(j.errore || 'Errore del server'), {server:true});
+  return j;
+}
+
+async function caricaGiorno(){
+  try{
+    const j = await api('giorno', {data: oggi()});
+    S.consegne = j.consegne; if(j.motivi) S.motivi = j.motivi;
+    LS.set('consegne', S.consegne);
+    setSync();
+  }catch(e){
+    S.consegne = LS.get('consegne', []);
+    setSync(e.server ? null : 'off');
+    if(e.server) toast(e.message);
+  }
+  disegnaLista();
+}
+
+/* coda offline: gli scan senza rete vengono reinviati appena torna il segnale */
+async function svuotaCoda(){
+  if(S.inviando || !S.coda.length) return setSync();
+  S.inviando = true;
+  try{
+    while(S.coda.length){
+      const x = S.coda[0];
+      let j;
+      try{ j = await api('scan', x); }
+      catch(e){ if(!e.server) throw e; j = {esito:'errore', errore:e.message}; }
+      if(j.esito==='abbina' || j.esito==='completa' || j.esito==='errore') aggiungiPendente(x.codice, x.modo);
+      S.coda.shift(); LS.set('coda', S.coda);
+    }
+    caricaGiorno();
+  }catch(e){ /* ancora offline */ }
+  S.inviando = false; setSync();
+}
+function setSync(stato){
+  const el = $('#h-sync');
+  if(stato==='off' || !navigator.onLine){ el.textContent = S.coda.length ? S.coda.length+' in attesa' : 'Senza rete'; el.className='sync off'; return; }
+  if(S.coda.length){ el.textContent = S.coda.length+' da inviare'; el.className='sync coda'; return; }
+  el.textContent = 'In linea'; el.className='sync';
+}
+window.addEventListener('online', svuotaCoda);
+setInterval(svuotaCoda, 20000);
+
+function aggiungiPendente(codice, modo){
+  if(!S.pendenti.some(p=>p.codice===codice)) S.pendenti.push({codice, modo});
+  LS.set('pendenti', S.pendenti); disegnaPendenti();
+}
+function disegnaPendenti(){
+  const el = $('#pendenti');
+  if(!S.pendenti.length){ el.innerHTML=''; return; }
+  el.innerHTML = `<div class="avviso">${S.pendenti.length===1?'Un collo letto senza rete non è ancora abbinato':S.pendenti.length+' colli letti senza rete non sono ancora abbinati'} a una consegna.<br>
+    <button class="btn sec" id="b-pend">Abbina ora</button></div>`;
+  $('#b-pend').onclick = () => { const p = S.pendenti[0]; S.modo = p.modo; scegliConsegna(p.codice, true); };
+}
+
+/* ================= HOME ================= */
+function mostra(id){
+  ['#v-setup','#v-home','#v-ufficio'].forEach(s => $(s).classList.toggle('hidden', s!==id));
+}
+function avvia(){
+  if(!S.nome || !S.url || !S.chiave){
+    mostra('#v-setup');
+    $('#campi-server').classList.toggle('hidden', !!(CONFIG.SERVER_URL && CONFIG.CHIAVE));
+    $('#in-nome').value = S.nome;
+    return;
+  }
+  $('#h-nome').textContent = S.nome;
+  $('#h-giorno').textContent = dataLunga(oggi());
+  mostra('#v-home');
+  segnaZona(); disegnaPendenti();
+  S.consegne = LS.get('consegne', []); disegnaLista();
+  caricaGiorno(); svuotaCoda();
+}
+function segnaZona(){
+  document.querySelectorAll('.zone button').forEach(b => b.setAttribute('aria-pressed', b.dataset.zona===S.zona));
+}
+function classeStato(s){
+  if(s==='Mancata consegna') return 'Mancata';
+  if(/parziale/.test(s||'')) return 'parziale';
+  return s || '';
+}
+function filtrate(){
+  return S.consegne.filter(c => S.zona==='tutte' || c.zona===S.zona);
+}
+function disegnaLista(){
+  const lista = filtrate();
+  const tot = lista.reduce((a,c)=>a+c.colli,0), car = lista.reduce((a,c)=>a+c.caricati,0), con = lista.filter(c=>c.stato==='Consegnato').length;
+  $('#r-sx').textContent = lista.length + (lista.length===1?' consegna':' consegne') + ' · ' + tot + ' colli';
+  $('#r-dx').textContent = car + ' caricati · ' + con + ' consegnate';
+  if(!lista.length){
+    $('#lista').innerHTML = `<li class="vuoto">Nessuna consegna per oggi in questa zona.<br>Il picking si carica dal menu ☰ › Ufficio.</li>`;
+    return;
+  }
+  $('#lista').innerHTML = lista.map(c => `
+    <li>
+      <div class="testo">
+        <div class="cli">${esc(c.cliente)}</div>
+        <div class="dove">${esc(c.citta)}${c.indirizzo?' – '+esc(c.indirizzo):''}${c.pallet?' · Pallet':''}</div>
+        <span class="stato ${classeStato(c.stato)}">${esc(c.stato)}${c.motivo&&c.stato==='Mancata consegna'?' – '+esc(c.motivo):''}</span>${c.stato!=='Consegnato' && c.caricati>0 ? `<button class="li-btn" data-mancata="${esc(c.picking)}">Non consegnato</button>`:''}
+      </div>
+      <div class="conta">${c.stato==='Consegnato'||/Consegna/.test(c.stato)?c.consegnati:c.caricati}<small>/${c.colli}</small></div>
+    </li>`).join('');
+  document.querySelectorAll('[data-mancata]').forEach(b => b.onclick = () => mancata(b.dataset.mancata));
+}
+
+/* ================= SCANNER ================= */
+let audio;
+function suono(tipo){
+  try{
+    audio = audio || new (window.AudioContext||window.webkitAudioContext)();
+    if(tipo==='sblocco'){ audio.resume && audio.resume(); return; }   // iOS: l'audio va sbloccato con un tocco
+    const note = tipo==='ok' ? [[1320,.09]] : tipo==='fine' ? [[1100,.08],[1650,.14]] : [[330,.14],[0,.06],[330,.14]];
+    let t = audio.currentTime;
+    note.forEach(([f,d]) => { if(f){ const o=audio.createOscillator(), g=audio.createGain(); o.frequency.value=f; o.type='square'; g.gain.value=.08; o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t+d); } t+=d; });
+  }catch(e){}
+}
+function lampo(colore){
+  const el = $('#lampo'); el.style.background = colore; el.classList.add('on');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('on')));
+}
+function esito(tipo, titolo, testo){
+  const el = $('#esito'); el.className = 'esito '+tipo;
+  el.innerHTML = `<b>${esc(titolo)}</b>${esc(testo||'')}`;
+}
+function disegnaCartellino(){
+  const el = $('#cartellino'), c = S.attiva && S.consegne.find(x=>x.picking===S.attiva);
+  if(!c){
+    el.className = 'cartellino nessuno';
+    el.innerHTML = `<div class="cli">Nessun cliente selezionato</div><div class="dove">Al primo collo ti chiederò di che consegna è.</div>`;
+    return;
+  }
+  const n = S.modo==='carico' ? c.caricati : c.consegnati;
+  el.className = 'cartellino';
+  el.innerHTML = `<div class="k">Picking ${esc(c.picking)}</div>
+    <div class="cli">${esc(c.cliente)}</div>
+    <div class="dove">${esc(c.citta)}${c.indirizzo?' – '+esc(c.indirizzo):''}</div>
+    <div class="num">${n}<small>/${c.colli}</small></div>
+    <div class="azioni">
+      <button class="btn sec" id="b-cambia">Cambia cliente</button>
+      ${S.modo==='consegna'?`<button class="btn sec" id="b-mancata-att">Non consegnato</button>`:''}
+    </div>`;
+  $('#b-cambia').onclick = () => { S.attiva = null; disegnaCartellino(); esito('', 'Cliente tolto', 'Il prossimo collo ti chiederà a che consegna appartiene.'); };
+  const bm = $('#b-mancata-att'); if(bm) bm.onclick = () => mancata(c.picking);
+}
+
+async function apriScanner(modo){
+  S.modo = modo; S.attiva = null;
+  suono('sblocco');
+  $('#s-modo').textContent = modo==='carico' ? 'Carico' : 'Consegna';
+  $('#scanner').classList.remove('hidden');
+  disegnaCartellino();
+  esito('', 'Inquadra il codice grande in basso sull\'etichetta', 'Il numero che inizia con 0, sotto le barre.');
+  if(navigator.geolocation){
+    S.geo = navigator.geolocation.watchPosition(p => S.pos = {lat:p.coords.latitude, lng:p.coords.longitude}, ()=>{}, {enableHighAccuracy:true, maximumAge:30000, timeout:15000});
+  }
+  if(!window.Html5Qrcode){ esito('err','Fotocamera non disponibile','Scrivi il numero collo nel campo qui sotto.'); return; }
+  try{
+    const F = Html5QrcodeSupportedFormats;
+    S.scanner = new Html5Qrcode('camera', {formatsToSupport:[F.CODE_128, F.ITF, F.CODE_39, F.EAN_13], verbose:false, experimentalFeatures:{useBarCodeDetectorIfSupported:true}});
+    await S.scanner.start({facingMode:'environment'}, {fps:12, qrbox:(w,h)=>({width:Math.floor(w*.84), height:Math.floor(h*.4)}), aspectRatio: window.innerWidth/(window.innerHeight*.42)}, letto, ()=>{});
+  }catch(e){
+    esito('err','La fotocamera non si è avviata','Consenti l\'accesso alla fotocamera in Safari (aA › Impostazioni sito web) oppure scrivi il numero a mano.');
+  }
+}
+async function chiudiScanner(){
+  if(S.scanner){ try{ await S.scanner.stop(); S.scanner.clear(); }catch(e){} S.scanner = null; }
+  if(S.geo!=null){ navigator.geolocation.clearWatch(S.geo); S.geo = null; }
+  $('#scanner').classList.add('hidden');
+  disegnaLista();
+}
+
+function letto(testo){
+  const codice = String(testo).trim();
+  const ora = Date.now();
+  if(codice===S.ultimo.codice && ora-S.ultimo.t < 4000) return;   // stessa lettura ripetuta dalla fotocamera
+  if(S.bloccoScan) return;
+  S.ultimo = {codice, t:ora};
+  if(!CONFIG.COLLO_REGEX.test(codice)){
+    suono('err'); lampo('#F2A900');
+    esito('warn', 'Codice ignorato: '+codice, 'Questo non è il numero collo. Inquadra il codice grande in basso, quello che inizia con 0.');
+    return;
+  }
+  invia(codice, S.attiva);
+}
+
+async function invia(codice, picking, forza){
+  const req = {codice, modo:S.modo, picking:picking||'', ts:new Date().toISOString(), forza:!!forza};
+  if(S.pos){ req.lat = S.pos.lat; req.lng = S.pos.lng; }
+  S.bloccoScan = true;
+  esito('', 'Invio '+codice+'…');
+  try{
+    const j = await api('scan', req);
+    gestisciRisposta(j, codice);
+  }catch(e){
+    if(e.server){ suono('err'); lampo('#C8372D'); esito('err','Errore', e.message); }
+    else{
+      S.coda.push(req); LS.set('coda', S.coda); setSync('off');
+      suono('ok'); lampo('#F2A900');
+      esito('warn', codice+' salvato senza rete', picking ? 'Verrà inviato appena torna il segnale.' : 'Verrà inviato appena torna il segnale. Se serve, ti chiederò il cliente dopo.');
+      aggiornaLocale(picking, 1);
+    }
+  }
+  S.bloccoScan = false;
+}
+
+function aggiornaLocale(picking, n){
+  const c = S.consegne.find(x=>x.picking===picking); if(!c) return;
+  if(S.modo==='carico') c.caricati = Math.min(c.colli, c.caricati+n); else c.consegnati = Math.min(c.colli, c.consegnati+n);
+  disegnaCartellino();
+}
+
+function gestisciRisposta(j, codice){
+  if(j.esito==='abbina'){ suono('ok'); scegliConsegna(codice); return; }
+  if(j.esito==='completa'){
+    S.attiva = null; disegnaCartellino();
+    suono('err'); lampo('#F2A900');
+    esito('warn', 'Consegna già completa', `${j.cliente} ha già tutti i colli. Scegli a chi appartiene ${codice}.`);
+    scegliConsegna(codice); return;
+  }
+  if(j.consegna){
+    const i = S.consegne.findIndex(x=>x.picking===j.consegna.picking);
+    if(i>=0) S.consegne[i] = j.consegna; else S.consegne.push(j.consegna);
+    LS.set('consegne', S.consegne);
+  }
+  const c = j.consegna;
+  if(!c){ suono('ok'); lampo('#1E9E5A'); esito('ok', codice+' registrato', ''); return; }
+  if(j.esito==='doppio'){
+    S.attiva = j.picking; disegnaCartellino();
+    suono('err'); lampo('#F2A900');
+    esito('warn', codice+' già letto', `Era già ${S.modo==='carico'?'caricato':'consegnato'} (${c?c.cliente:''}).`);
+    return;
+  }
+  if(j.esito==='gia_consegnato'){
+    suono('err'); lampo('#F2A900'); esito('warn', codice+' risulta già consegnato', c?c.cliente:''); return;
+  }
+  const n = S.modo==='carico' ? c.caricati : c.consegnati;
+  if(j.completa){
+    suono('fine'); lampo('#1E9E5A');
+    esito('ok', `${c.cliente}: ${S.modo==='carico'?'tutti caricati':'consegna completa'}`, `${n} colli su ${c.colli}. Il prossimo collo ti chiederà il cliente.`);
+    S.attiva = null;
+  }else{
+    suono('ok'); lampo('#1E9E5A');
+    S.attiva = j.picking;
+    esito('ok', `${codice} ${S.modo==='carico'?'caricato':'consegnato'}`, `${c.cliente} – ${n} di ${c.colli}`);
+  }
+  disegnaCartellino();
+}
+
+/* ---- scelta del cliente per un collo nuovo ---- */
+function scegliConsegna(codice, daPendente){
+  const cand = S.consegne.filter(c => c.stato!=='Consegnato');
+  $('#modale').innerHTML = `<div class="velo"><div class="foglio" role="dialog" aria-labelledby="t-abb">
+    <h2 id="t-abb">Di che consegna è il collo ${esc(codice)}?</h2>
+    <p>Guarda il cliente sull'etichetta. I colli successivi andranno sullo stesso cliente.</p>
+    <input class="cerca" id="cerca" placeholder="Scrivi il nome del cliente o la città" autocomplete="off">
+    <div class="scorri"><ul class="lista scelta" id="cand"></ul></div>
+    <div class="riga-btn"><button class="btn sec" id="b-ann">Annulla</button></div>
+  </div></div>`;
+  const disegna = q => {
+    q = (q||'').toLowerCase().trim();
+    const l = cand.filter(c => !q || (c.cliente+' '+c.citta+' '+c.picking).toLowerCase().includes(q))
+      .sort((a,b)=> (b.zona===S.zona)-(a.zona===S.zona));
+    $('#cand').innerHTML = l.length ? l.map(c => `<li data-p="${esc(c.picking)}"><div class="testo"><div class="cli">${esc(c.cliente)}</div><div class="dove">${esc(c.citta)} · picking ${esc(c.picking)}</div></div><div class="conta">${S.modo==='carico'?c.caricati:c.consegnati}<small>/${c.colli}</small></div></li>`).join('')
+      : `<li class="vuoto">Nessuna consegna trovata.</li>`;
+    document.querySelectorAll('#cand [data-p]').forEach(li => li.onclick = async () => {
+      chiudiModale();
+      if(daPendente){ S.pendenti = S.pendenti.filter(p=>p.codice!==codice); LS.set('pendenti', S.pendenti); disegnaPendenti(); }
+      if(daPendente && $('#scanner').classList.contains('hidden')){
+        try{ const j = await api('scan', {codice, modo:S.modo, picking:li.dataset.p, forza:true}); toast(codice+' abbinato a '+(j.consegna?j.consegna.cliente:'')); caricaGiorno(); }
+        catch(e){ toast(e.message); aggiungiPendente(codice, S.modo); }
+        return;
+      }
+      invia(codice, li.dataset.p, true);
+    });
+  };
+  disegna('');
+  $('#cerca').oninput = e => disegna(e.target.value);
+  $('#b-ann').onclick = () => { chiudiModale(); esito('', 'Collo '+codice+' non registrato', 'Scansionalo di nuovo quando sai di chi è.'); };
+}
+function chiudiModale(){ $('#modale').innerHTML = ''; }
+
+/* ---- mancata consegna ---- */
+function mancata(picking){
+  const c = S.consegne.find(x=>x.picking===picking); if(!c) return;
+  let motivo = '';
+  $('#modale').innerHTML = `<div class="velo"><div class="foglio" role="dialog" aria-labelledby="t-man">
+    <h2 id="t-man">Non consegnato: ${esc(c.cliente)}</h2>
+    <p>La consegna passa al prossimo giorno lavorativo e i colli tornano in magazzino.</p>
+    <div class="chips" id="motivi">${S.motivi.map(m=>`<button aria-pressed="false">${esc(m)}</button>`).join('')}</div>
+    <textarea id="nota" placeholder="Nota (facoltativa): es. ufficio chiuso fino alle 14"></textarea>
+    <div class="riga-btn"><button class="btn sec" id="b-ann2">Annulla</button><button class="btn rosso" id="b-conf" disabled>Segna non consegnato</button></div>
+  </div></div>`;
+  document.querySelectorAll('#motivi button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#motivi button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true'); motivo = b.textContent; $('#b-conf').disabled = false;
+  });
+  $('#b-ann2').onclick = chiudiModale;
+  $('#b-conf').onclick = async () => {
+    $('#b-conf').disabled = true;
+    try{
+      const req = {picking, motivo, nota:$('#nota').value.trim()};
+      if(S.pos){ req.lat=S.pos.lat; req.lng=S.pos.lng; }
+      const j = await api('mancata', req);
+      const i = S.consegne.findIndex(x=>x.picking===picking); if(i>=0) S.consegne[i] = j.consegna;
+      chiudiModale(); toast('Segnato non consegnato. Riprogrammato per '+dataLunga(j.nuovaData)+'.');
+      if(S.attiva===picking){ S.attiva=null; disegnaCartellino(); }
+      disegnaLista();
+    }catch(e){ toast(e.server ? e.message : 'Serve la rete per segnare la mancata consegna. Riprova tra poco.'); $('#b-conf').disabled = false; }
+  };
+}
+
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.remove('hidden'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.add('hidden'), 4500); }
+
+/* ================= UFFICIO: IMPORT EXCEL ================= */
+// Legge un foglio (array di righe) di Mondoffice e restituisce {tipo, righe}
+function leggiFoglio(aoa){
+  const norm = v => String(v==null?'':v).toLowerCase().replace(/\s+/g,' ').trim();
+  const hi = aoa.findIndex(r => r && r.some(v => norm(v)==='picking'));
+  if(hi<0) return null;
+  const h = aoa[hi].map(norm);
+  const col = (...nomi) => h.findIndex(x => nomi.some(n => x===n || x.startsWith(n)));
+  const dataIso = v => v instanceof Date ? ymd(v) : (typeof v==='number' ? ymd(new Date(Math.round((v-25569)*864e5) + new Date().getTimezoneOffset()*6e4)) : String(v||'').slice(0,10));
+  const rows = aoa.slice(hi+1).filter(r => r && r[col('picking')] != null && String(r[col('picking')]).trim()!=='');
+  if(col('conteggio colli')>=0){
+    const c = {d:col('data di spedizione'), p:col('picking'), cl:col('cliente'), ci:col('città','citta'), pr:col('provincia'), n:col('conteggio colli'), w:col('peso')};
+    return {tipo:'picking', righe: rows.map(r => ({picking:String(r[c.p]).trim(), dataSpedizione:c.d>=0?dataIso(r[c.d]):'', cliente:r[c.cl], citta:r[c.ci], prov:r[c.pr], colli:Number(r[c.n])||0, peso:c.w>=0?r[c.w]:''}))};
+  }
+  if(col('numero colli')>=0){
+    const c = {p:col('picking'), cl:col('cliente'), ci:col('destinazione'), ind:col('indirizzo'), cap:col('cap'), n:col('numero colli'), u:col('unità di misura','unita di misura')};
+    return {tipo:'dettaglio', righe: rows.map(r => ({picking:String(r[c.p]).trim(), cliente:r[c.cl], citta:r[c.ci], indirizzo:r[c.ind], cap:r[c.cap], colli:Number(r[c.n])||0, unita:c.u>=0?r[c.u]:''}))};
+  }
+  return null;
+}
+function dataDaNomeFile(nome){
+  const m = nome.match(/(20\d{2})[_\-.](\d{2})[_\-.](\d{2})/);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+}
+function prossimoLavorativo(){
+  const d = new Date(); if(d.getHours()>=12) d.setDate(d.getDate()+1);
+  while(d.getDay()===0 || d.getDay()===6) d.setDate(d.getDate()+1);
+  return ymd(d);
+}
+async function importaFile(files){
+  const log = $('#import-log'); log.textContent = '';
+  if(!window.XLSX){ log.textContent = 'Libreria Excel non caricata: controlla la connessione e ricarica la pagina.'; return; }
+  const letti = [];
+  for(const f of files){
+    try{
+      const wb = XLSX.read(await f.arrayBuffer(), {cellDates:true});
+      let trovato = null;
+      for(const n of wb.SheetNames){ trovato = leggiFoglio(XLSX.utils.sheet_to_json(wb.Sheets[n], {header:1, raw:true})); if(trovato) break; }
+      if(!trovato){ log.textContent += `✗ ${f.name}: non riconosco le colonne (manca "Picking").\n`; continue; }
+      const d = dataDaNomeFile(f.name); if(d && !$('#in-data-import').dataset.toccata) $('#in-data-import').value = d;
+      letti.push(Object.assign(trovato, {nome:f.name}));
+    }catch(e){ log.textContent += `✗ ${f.name}: file non leggibile (${e.message}).\n`; }
+  }
+  letti.sort((a,b) => (a.tipo==='picking'?0:1)-(b.tipo==='picking'?0:1));   // prima il picking, poi il dettaglio
+  for(const x of letti){
+    try{
+      const j = await api('importa', {tipo:x.tipo, righe:x.righe, dataConsegna:$('#in-data-import').value});
+      log.textContent += `✓ ${x.nome} (${x.tipo==='picking'?'picking':'dettaglio carta'}): ${j.nuove} nuove, ${j.aggiornate} aggiornate`+
+        (j.riproposte?`, ${j.riproposte} già rimandate`:'')+` · consegne del ${dataLunga(j.dataConsegna)}\n`;
+    }catch(e){ log.textContent += `✗ ${x.nome}: ${e.message}\n`; }
+  }
+  $('#in-file').value = '';
+  caricaGiorno();
+}
+
+/* ================= EVENTI ================= */
+document.querySelectorAll('[data-modo]').forEach(b => b.onclick = () => apriScanner(b.dataset.modo));
+document.querySelectorAll('[data-zona]').forEach(b => b.onclick = () => { S.zona = b.dataset.zona; LS.set('zona', S.zona); segnaZona(); disegnaLista(); });
+$('#b-chiudi').onclick = chiudiScanner;
+$('#b-manuale').onclick = () => { const v = $('#in-codice').value.replace(/\D/g,''); if(!v) return; $('#in-codice').value=''; S.ultimo={codice:'',t:0}; letto(v.padStart(8,'0')); };
+$('#in-codice').onkeydown = e => { if(e.key==='Enter') $('#b-manuale').click(); };
+$('#b-salva-setup').onclick = () => {
+  S.nome = $('#in-nome').value.trim(); if(!S.nome) return $('#in-nome').focus();
+  if(!(CONFIG.SERVER_URL && CONFIG.CHIAVE)){ S.url = $('#in-url').value.trim(); S.chiave = $('#in-chiave').value.trim(); }
+  LS.set('nome', S.nome); LS.set('url', S.url); LS.set('chiave', S.chiave); avvia();
+};
+$('#b-menu').onclick = () => {
+  mostra('#v-ufficio');
+  $('#set-nome').value = S.nome; $('#set-url').value = S.url; $('#set-chiave').value = S.chiave;
+  const d = $('#in-data-import'); if(!d.value) d.value = prossimoLavorativo();
+};
+$('#in-data-import').onchange = e => e.target.dataset.toccata = '1';
+$('#b-indietro').onclick = avvia;
+$('#in-file').onchange = e => e.target.files.length && importaFile([...e.target.files]);
+$('#b-salva-set').onclick = () => {
+  S.nome = $('#set-nome').value.trim() || S.nome; S.url = $('#set-url').value.trim(); S.chiave = $('#set-chiave').value.trim();
+  LS.set('nome', S.nome); LS.set('url', S.url); LS.set('chiave', S.chiave); toast('Impostazioni salvate'); avvia();
+};
+document.addEventListener('visibilitychange', () => { if(!document.hidden && !$('#v-home').classList.contains('hidden')) caricaGiorno(); });
+
+avvia();
+</script>
+</body>
+</html>
