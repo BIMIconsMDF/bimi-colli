@@ -72,6 +72,11 @@ main{padding:16px;max-width:640px;margin:0 auto;padding-bottom:calc(env(safe-are
 .stato.Mancata{background:#f8d7d7;color:#8e221a}
 .stato.parziale{background:#fff2cc;color:#7a5a00}
 .li-btn{border:1px solid var(--linea);background:#fff;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:600;margin:3px 0 0 6px;color:#8e221a}
+.lista li.tocca{cursor:pointer}
+.lista li.tocca:active{background:#f1f4f7}
+.freccia{font-size:24px;color:var(--linea);margin-left:-4px}
+.dati{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;background:#fff;border:1px solid var(--linea);border-radius:var(--r);padding:10px 12px;font-size:13px;color:var(--grigio);align-items:center}
+.dati b{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:24px;color:var(--inchiostro)}
 .vuoto{padding:28px 18px;text-align:center;color:var(--grigio)}
 
 /* scanner */
@@ -370,15 +375,60 @@ function disegnaLista(){
     return;
   }
   $('#lista').innerHTML = lista.map(c => `
-    <li>
+    <li class="tocca" data-p="${esc(c.picking)}">
       <div class="testo">
         <div class="cli">${esc(c.cliente)}</div>
         <div class="dove">${esc(c.citta)}${c.indirizzo?' – '+esc(c.indirizzo):''}${c.pallet?' · Pallet':''}</div>
-        <span class="stato ${classeStato(c.stato)}">${esc(c.stato)}${c.motivo&&c.stato==='Mancata consegna'?' – '+esc(c.motivo):''}</span>${c.stato!=='Consegnato' && c.caricati>0 ? `<button class="li-btn" data-mancata="${esc(c.picking)}">Non consegnato</button>`:''}
+        <span class="stato ${classeStato(c.stato)}">${esc(c.stato)}${c.motivo&&c.stato==='Mancata consegna'?' – '+esc(c.motivo):''}</span>
       </div>
       <div class="conta">${c.stato==='Consegnato'||/Consegna/.test(c.stato)?c.consegnati:c.caricati}<small>/${c.colli}</small></div>
+      <span class="freccia" aria-hidden="true">›</span>
     </li>`).join('');
-  document.querySelectorAll('[data-mancata]').forEach(b => b.onclick = () => mancata(b.dataset.mancata));
+  document.querySelectorAll('#lista [data-p]').forEach(li => li.onclick = () => schedaConsegna(li.dataset.p));
+}
+
+/* scheda di una consegna: azioni disponibili per l'autista */
+function schedaConsegna(picking){
+  const c = S.consegne.find(x=>x.picking===picking); if(!c) return;
+  const indirizzo = [c.indirizzo, c.citta].filter(Boolean).join(', ');
+  const mappe = 'https://maps.apple.com/?q=' + encodeURIComponent(indirizzo || c.cliente);
+  $('#modale').innerHTML = `<div class="velo"><div class="foglio" role="dialog" aria-labelledby="t-sch">
+    <h2 id="t-sch">${esc(c.cliente)}</h2>
+    <p>${esc(indirizzo)}<br>Picking ${esc(c.picking)} · ${c.colli} colli${c.pallet?' · Pallet':''}</p>
+    <div class="dati">
+      <div><b>${c.caricati}/${c.colli}</b>caricati</div>
+      <div><b>${c.consegnati}/${c.colli}</b>consegnati</div>
+      <div><span class="stato ${classeStato(c.stato)}">${esc(c.stato)}</span></div>
+    </div>
+    ${c.stato==='Mancata consegna'?`<p>Non consegnato${c.motivo?': '+esc(c.motivo):''}${c.tentativi>1?' ('+c.tentativi+' tentativi)':''}. Riprogrammato per ${esc(dataLunga(c.data))}.</p>`:''}
+    <a class="btn sec pieno" href="${mappe}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">Apri in Mappe</a>
+    ${c.stato!=='Consegnato'?`<button class="btn rosso pieno" id="b-sch-man">Non consegnato…</button>`:''}
+    <button class="btn sec pieno" id="b-sch-chiudi">Chiudi</button>
+  </div></div>`;
+  $('#b-sch-chiudi').onclick = chiudiModale;
+  const b = $('#b-sch-man'); if(b) b.onclick = () => mancata(picking);
+}
+
+/* scelta di un cliente da segnare come non consegnato (dallo scanner) */
+function scegliMancata(){
+  const cand = S.consegne.filter(c => c.stato!=='Consegnato');
+  $('#modale').innerHTML = `<div class="velo"><div class="foglio" role="dialog" aria-labelledby="t-sm">
+    <h2 id="t-sm">Quale cliente non hai consegnato?</h2>
+    <input class="cerca" id="cerca2" placeholder="Scrivi il nome del cliente o la città" autocomplete="off">
+    <div class="scorri"><ul class="lista scelta" id="cand2"></ul></div>
+    <div class="riga-btn"><button class="btn sec" id="b-ann3">Annulla</button></div>
+  </div></div>`;
+  const disegna = q => {
+    q = (q||'').toLowerCase().trim();
+    const l = cand.filter(c => !q || (c.cliente+' '+c.citta+' '+c.picking).toLowerCase().includes(q))
+      .sort((a,b)=> (b.caricati>0)-(a.caricati>0));
+    $('#cand2').innerHTML = l.length ? l.map(c => `<li data-p="${esc(c.picking)}"><div class="testo"><div class="cli">${esc(c.cliente)}</div><div class="dove">${esc(c.citta)}</div></div><div class="conta">${c.caricati}<small>/${c.colli}</small></div></li>`).join('')
+      : `<li class="vuoto">Nessuna consegna trovata.</li>`;
+    document.querySelectorAll('#cand2 [data-p]').forEach(li => li.onclick = () => mancata(li.dataset.p));
+  };
+  disegna('');
+  $('#cerca2').oninput = e => disegna(e.target.value);
+  $('#b-ann3').onclick = chiudiModale;
 }
 
 /* ================= SCANNER ================= */
@@ -404,7 +454,9 @@ function disegnaCartellino(){
   const el = $('#cartellino'), c = S.attiva && S.consegne.find(x=>x.picking===S.attiva);
   if(!c){
     el.className = 'cartellino nessuno';
-    el.innerHTML = `<div class="cli">Nessun cliente selezionato</div><div class="dove">Al primo collo ti chiederò di che consegna è.</div>`;
+    el.innerHTML = `<div class="cli">Nessun cliente selezionato</div><div class="dove">Al primo collo ti chiederò di che consegna è.</div>
+      ${S.modo==='consegna'?`<div class="azioni"><button class="btn sec" id="b-scegli-man">Cliente non consegnato…</button></div>`:''}`;
+    const bs = $('#b-scegli-man'); if(bs) bs.onclick = scegliMancata;
     return;
   }
   const n = S.modo==='carico' ? c.caricati : c.consegnati;
