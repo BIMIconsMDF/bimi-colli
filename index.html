@@ -391,7 +391,8 @@ function disegnaLista(){
 function schedaConsegna(picking){
   const c = S.consegne.find(x=>x.picking===picking); if(!c) return;
   const indirizzo = [c.indirizzo, c.citta].filter(Boolean).join(', ');
-  const mappe = 'https://maps.apple.com/?q=' + encodeURIComponent(indirizzo || c.cliente);
+  // con l'indirizzo completo si va dritti al civico; senza, si cerca l'azienda per nome nel suo comune
+  const mappe = 'https://maps.apple.com/?q=' + encodeURIComponent(c.indirizzo ? [c.indirizzo, c.cap, c.citta].filter(Boolean).join(' ') : c.cliente + ' ' + c.citta);
   $('#modale').innerHTML = `<div class="velo"><div class="foglio" role="dialog" aria-labelledby="t-sch">
     <h2 id="t-sch">${esc(c.cliente)}</h2>
     <p>${esc(indirizzo)}<br>Picking ${esc(c.picking)} · ${c.colli} colli${c.pallet?' · Pallet':''}</p>
