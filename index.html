@@ -343,7 +343,7 @@ function mostra(id){
 function avvia(){
   if(!S.nome || !S.url || !S.chiave){
     mostra('#v-setup');
-    $('#campi-server').classList.toggle('hidden', !!(CONFIG.SERVER_URL && CONFIG.CHIAVE));
+    $('#campi-server').classList.toggle('hidden', !!(S.url && S.chiave));   // arrivati dal link: chiedo solo il nome
     $('#in-nome').value = S.nome;
     return;
   }
@@ -705,7 +705,7 @@ $('#b-manuale').onclick = () => { const v = $('#in-codice').value.replace(/\D/g,
 $('#in-codice').onkeydown = e => { if(e.key==='Enter') $('#b-manuale').click(); };
 $('#b-salva-setup').onclick = () => {
   S.nome = $('#in-nome').value.trim(); if(!S.nome) return $('#in-nome').focus();
-  if(!(CONFIG.SERVER_URL && CONFIG.CHIAVE)){ S.url = $('#in-url').value.trim(); S.chiave = $('#in-chiave').value.trim(); }
+  if(!$('#campi-server').classList.contains('hidden')){ S.url = $('#in-url').value.trim(); S.chiave = $('#in-chiave').value.trim(); }
   LS.set('nome', S.nome); LS.set('url', S.url); LS.set('chiave', S.chiave); avvia();
 };
 $('#b-menu').onclick = () => {
