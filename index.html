@@ -161,6 +161,12 @@ label.campo input{display:block;width:100%;margin-top:4px;border:1px solid var(-
 .car.eliminato{opacity:.55}
 .gestione{border-top:1px solid var(--linea);padding-top:10px}
 .gestione input{flex:1;border:1px solid var(--linea);border-radius:8px;padding:11px;font-size:16px;background:#fff;min-width:0}
+.istr{list-style:none;margin:0;padding:0;counter-reset:n}
+.istr li{position:relative;padding:0 0 14px 44px;font-size:15px;line-height:1.45;color:var(--grigio);counter-increment:n}
+.istr li:before{content:counter(n);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:8px;background:var(--blu);color:#fff;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:19px;display:flex;align-items:center;justify-content:center}
+.istr li b{display:block;color:var(--inchiostro);font-size:16px}
+.istr li.carta:before{background:var(--etichetta);color:var(--inchiostro)}
+.foglio .istr{overflow:auto}
 .turno{display:flex;flex-direction:column;background:#f3f6fa;border:1px solid var(--linea);border-radius:8px;padding:12px 14px;margin-bottom:12px}
 .turno span{font-size:13px;color:var(--grigio)}
 .turno b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:26px;line-height:1.15}
@@ -256,6 +262,11 @@ nav.tab button[aria-pressed=true]{background:var(--inchiostro);color:#fff;border
         <p>Tutte le consegne, i colli scansionati e lo storico delle operazioni.</p>
         <a class="btn sec pieno" id="b-foglio" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Apri il foglio</a>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>Come si usa</h2>
+      <div id="istruzioni"></div>
     </div>
 
     <div class="card">
@@ -405,6 +416,7 @@ function avvia(){
   $('#h-giorno').textContent = dataLunga(oggi());
   mostra('#v-home');
   segnaRuolo(); caricaProfilo();
+  if(!LS.get('istruzioni_' + S.nome, 0)) mostraIstruzioni();
   segnaZona(); disegnaPendenti();
   S.consegne = LS.get('consegne', []); disegnaLista();
   caricaGiorno(); svuotaCoda();
@@ -416,6 +428,19 @@ async function caricaProfilo(){
     if(j.ruolo==='manager'){ S.foglio = j.foglio; S.chiaveAutisti = j.chiaveAutisti; LS.set('foglio', j.foglio); LS.set('chiaveAutisti', j.chiaveAutisti); }
     segnaRuolo();
   }catch(e){ if(e.server) toast(e.message); }
+}
+const ISTRUZIONI = `<ol class="istr">
+  <li><b>Carico, in magazzino</b>Tocca <b style="display:inline">Carico</b> e scansiona ogni collo prima di partire: il codice grande in basso sull'etichetta, quello che inizia con 0. Al primo collo di un cliente scegli il nome; gli altri colli vanno da soli.</li>
+  <li><b>Consegna, dal cliente</b>Tocca <b style="display:inline">Consegna</b> e scansiona ogni collo che lasci. La consegna è chiusa quando arrivi a tutti i colli (es. 2/2).</li>
+  <li><b>Non consegnato</b>Cliente assente, chiuso o rifiuta? Segnalo subito dall'app con il motivo: la consegna passa al giorno dopo e i colli tornano in magazzino.</li>
+  <li><b>Controlla prima di partire</b>Nell'elenco un cliente a metà (es. 3/6) vuol dire che manca qualche collo. Etichetta illeggibile? Scrivi a mano il numero collo sotto la fotocamera.</li>
+  <li class="carta"><b>Carta (risme)</b>La carta si tratta come un collo qualsiasi: scansiona la sua etichetta. Se le risme non sono in Mondoffice e vanno prese nel nostro magazzino, <b style="display:inline">attacca l'etichetta che hai scansionato sulle risme</b> che prendi in magazzino.</li>
+</ol>`;
+function mostraIstruzioni(){
+  $('#modale').innerHTML = `<div class="velo"><div class="foglio" role="dialog" aria-labelledby="t-istr">
+    <h2 id="t-istr">Come si usa Bimi Colli</h2>${ISTRUZIONI}
+    <button class="btn pieno" id="b-istr-ok">Ho capito</button></div></div>`;
+  $('#b-istr-ok').onclick = () => { LS.set('istruzioni_' + S.nome, 1); chiudiModale(); };
 }
 function segnaRuolo(){ $('#h-ruolo').classList.toggle('hidden', S.ruolo!=='manager'); }
 function segnaZona(){
@@ -878,6 +903,7 @@ $('#b-salva-setup').onclick = () => {
 };
 $('#b-menu').onclick = () => {
   mostra('#v-ufficio');
+  $('#istruzioni').innerHTML = ISTRUZIONI;
   const man = S.ruolo==='manager';
   $('#m-manager').classList.toggle('hidden', !man);
   $('#m-sotto').textContent = man ? 'Picking, caricamenti e autisti' : 'Turno di lavoro';
